@@ -49,5 +49,5 @@
 ## 4. Sau khi so visibility report với bạn cùng nhóm
 
 - Khớp lệch `%v=1` nhiều nhất: `left_hip / right_hip` (97% v=1 — hông luôn bị che bởi quần áo)
-- Nguyên nhân là **guideline chưa rõ** hay **một trong hai bên gán sai**: Guideline đã rõ: hông luôn v=1.
-- Luật mới bổ sung vào mục 2 sau khi thống nhất: Không cần bổ sung — hông v=1 là quy ước chung, không có bất đồng.
+- Nguyên nhân là **guideline chưa rõ** hay **một trong hai bên gán sai**: Guideline chưa rõ về quy ước đánh giá khớp hông bị che bởi quần áo/vật cản so với khớp nhìn thấy rõ trực tiếp.
+- Luật mới bổ sung vào mục 2 sau khi thống nhất: Với người mặc quần dài, váy hoặc áo dài phủ qua vùng chậu, xương chậu và khớp hông không nhìn thấy trực tiếp được, bắt buộc gán `v=1` (occluded) và đặt chấm ước lượng tại vị trí giải phẫu ngang khớp chậu.

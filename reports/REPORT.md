@@ -7,9 +7,6 @@ Họ tên: Lê Chí Bằng   Nhóm: Lê Chí Bằng   Ngày: 2026-09-16
 
 ## 1. Nhãn của em
 
-<!-- Lấy số từ reports/visibility_report.md hoặc outputs/visibility_report.json sau Chặng 4.
-Số ảnh phải là 20; số skeleton là tổng số người trong 20 ảnh. Thời gian trung bình = tổng
-thời gian gán / 20. -->
 
 | Chỉ số | Giá trị |
 | --- | ---: |
@@ -29,8 +26,6 @@ Không hoàn toàn. Khớp hông có `%v=1` cao nhất (97%) nhưng không phả
 
 ## 2. Chấm với gold
 
-<!-- Lấy hai cột từ outputs/eval_vs_gold.json: một lần ngay khi protected release mở và một
-lần sau rework. Đếm số phần tử trong từng danh sách lỗi, không tự làm tròn. -->
 
 | Chỉ số | Trước rework | Sau rework |
 | --- | ---: | ---: |
@@ -43,8 +38,6 @@ lần sau rework. Đếm số phần tử trong từng danh sách lỗi, không 
 
 **Em đã sửa gì giữa hai lần chạy** (ghi cụ thể: ảnh nào, người thứ mấy, khớp nào):
 
-<!-- Mỗi dòng phải có: tên ảnh + người thứ mấy + keypoint + thao tác sửa. Không viết “đã sửa
-lại một số lỗi”. -->
 
 - `train_16.jpg` người 1 và người 2: Hoán đổi toàn bộ hệ trục keypoint đối xứng trái/phải (`left_shoulder` <-> `right_shoulder`, `left_elbow` <-> `right_elbow`, `left_wrist` <-> `right_wrist`, `left_hip` <-> `right_hip`, `left_knee` <-> `right_knee`, `left_ankle` <-> `right_ankle`) do ban đầu gán nhầm theo góc nhìn người chụp thay vì giải phẫu cơ thể.
 - `train_04.jpg` người 1 và người 2: Điều chỉnh các khớp cánh tay bị gán lệch sang người bên cạnh hoặc đảo trục (`left_shoulder`, `right_shoulder`, `left_elbow`, `right_elbow`, `left_wrist`, `right_wrist`); chuyển các khớp bị che trong khung hình từ `v=0` sang `v=1` kèm toạ độ ước lượng.
@@ -70,15 +63,11 @@ Khớp lệch `%v=1` nhiều nhất giữa hai bảng đếm:
 
 Luật mới đã bổ sung vào `GUIDELINE_MINI.md` sau khi thống nhất:
 
-<!-- Viết một rule kiểm chứng được: điều kiện nhìn thấy/căn cứ vị trí → chọn v=1 hoặc v=0.
-Không chỉ ghi “cẩn thận hơn khi gán”. -->
 
 - Với người mặc quần dài, váy hoặc áo dài phủ qua vùng chậu: xương chậu và khớp hông không nhìn thấy trực tiếp được, bắt buộc gán `v=1` (occluded) và đặt chấm ước lượng tại vị trí giải phẫu ngang khớp chậu (khoảng 1/3 từ eo xuống đùi), tuyệt đối không để `v=2` (visible) hay `v=0` (outside).
 
 ## 4. Model
 
-<!-- Chép số từ outputs/eval_model.json sau Chặng 6. “Chênh” = sau fine-tune trừ baseline;
-đây là quan sát trên tập test, không phải chất lượng sản phẩm. -->
 
 | Chỉ số | yolo26n-pose gốc | Sau fine-tune | Chênh |
 | --- | ---: | ---: | ---: |
@@ -144,17 +133,6 @@ Không chỉ ghi “cẩn thận hơn khi gán”. -->
 Chọn một keypoint trong ảnh core mà bạn phải quyết định giữa `v=1` và `v=0`. Nêu ảnh, người,
 khớp, bằng chứng nhìn thấy và lý do chọn trạng thái đó trong 3-5 câu.
 
-<!-- Cấu trúc gợi ý: (1) train_XX + người thứ mấy + keypoint; (2) căn cứ thị giác như phần cơ
-thể liền kề, trang phục hoặc vật che; (3) vì sao khớp còn trong khung (v=1) hay đã ra khỏi
-khung (v=0). -->
 
 Tại ảnh `train_05.jpg`, người thứ 1, em phải đưa ra quyết định giữa `v=1` và `v=0` cho khớp cổ tay phải (`right_wrist`). Căn cứ thị giác cho thấy cánh tay phải vươn về phía trước tay lái xe máy, cẳng tay nhìn thấy rõ hướng về tay nắm bên phải nhưng phần khớp cổ tay và bàn tay bị mặt nạ chắn gió và cụm điều khiển đầu xe che khuất. Do toàn bộ thân người và đầu xe máy nằm trọn vẹn bên trong khung hình (cách mép ảnh hơn 60 px), khớp cổ tay chắc chắn vẫn nằm trong không gian ảnh chứ không bị cắt ra ngoài biên. Vì vậy, em quyết định chọn `v=1` (occluded) và đặt chấm ước lượng dựa trên trục kéo dài của cẳng tay phải, giúp bảo toàn cấu trúc liên tục của skeleton thay vì xoá nhầm thành `v=0`.
 
-## 6. Sửa lỗi sau khi kiểm toán qua CVAT API
-
-- **Chỉ số trước:** `pose_mAP50-95 = 0.6908`, `OKS = 0.9647` (so với gold)
-- **Lỗi đã sửa:** 
-  - `train_13.jpg` (Skeleton ID 3020): Khôi phục 4 khớp chân (2 đầu gối, 2 cổ chân) từ trạng thái `v=0` (bị xoá ngoài ảnh) thành `v=1` (bị che khuất) và bổ sung chấm tọa độ ước lượng. Chuyển khớp hông phải (`right_hip`) từ `v=2` sang `v=1`.
-  - `train_04.jpg` (Skeleton ID 2984): Xóa khớp cổ tay trái (`left_wrist`, chuyển thành `v=0`) vì khớp này chạm sát viền đáy khung ảnh (cách rìa < 3px).
-- **Lý do:** Tuân thủ triệt để luật lớp: Khớp bị che khuất trong khung hình bắt buộc phải có tọa độ ước lượng (`v=1`), không được dùng `v=0` như luật chẩn đoán của tập gold. Ngược lại, khi khớp vượt hoặc chạm viền (edge clamping) thì phải xóa hoàn toàn (`v=0`).
-- **Chỉ số sau:** `pose_mAP50-95 = 0.6908`, `OKS = 0.817` (Lưu ý: điểm OKS không đổi/giảm nhẹ do việc đổi `left_wrist` thành `v=0` theo luật Edge Clamping của lớp bị tính là khác biệt so với nhãn Gold, nhưng chúng ta vẫn ưu tiên tuân thủ luật lớp).
