@@ -1,0 +1,18 @@
+# Cấu hình dataset pose cho Ultralytics - Ngày 4.
+# 'path: .' nghĩa là mọi đường dẫn dưới đây tính từ thư mục chứa chính file này.
+# Notebook Colab KHÔNG sửa file này - nó sinh ra data_colab.yaml riêng.
+path: .
+train: dataset/images/train
+val: dataset/images/test
+
+# kpt_shape: [17, 3] = 17 khớp, mỗi khớp 3 số (x, y, v).
+# Nếu chỗ này là [17, 2] thì toàn bộ cờ visibility đã bị vứt - slide 40.
+kpt_shape: [17, 3]
+
+# flip_idx: khi augmentation lật ảnh ngang, khớp thứ i phải đổi tên thành khớp thứ
+# flip_idx[i]. Đây chính là lý do nhãn đảo trái/phải bị dạy cho model HAI lần
+# (slide 15): sai một lần ở ảnh gốc, sai thêm một lần ở ảnh đã lật.
+flip_idx: [0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13, 16, 15]
+
+names:
+  0: person

@@ -1,0 +1,21 @@
+# Gold của tập train được phát sau khi lớp khóa nhãn; không commit nó vào repo này.
+gold/*
+!gold/.gitkeep
+
+# Kết quả chạy: ảnh đã vẽ skeleton (nặng) và thư mục runs của Ultralytics.
+outputs/vis_*/
+outputs/runs/
+
+# data.yaml phiên bản Colab do notebook sinh ra, chỉ đúng với đường dẫn Colab.
+data_colab.yaml
+
+# Checkpoint YOLO tải về lúc chạy, và file nén.
+*.pt
+*.zip
+
+# Ultralytics tự sinh khi train/val.
+*.cache
+
+__pycache__/
+.ipynb_checkpoints/
+.DS_Store

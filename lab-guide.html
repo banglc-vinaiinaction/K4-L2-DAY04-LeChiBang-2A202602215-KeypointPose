@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Hướng dẫn học viên Lab 4: gán nhãn COCO-17 pose trong CVAT, kiểm visibility, export COCO Keypoints và lập báo cáo chất lượng dữ liệu. Có ảnh chụp CVAT thật cho từng thao tác.">
+  <link rel="icon" href="data:,">
+  <title>Lab 4 | Pose Keypoints trong CVAT — hướng dẫn học viên</title>
+  <link rel="stylesheet" href="assets/guide/guide.css">
+  <script src="assets/guide/guide.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
+
+  <header class="site-header">
+    <a class="wordmark" href="#top" aria-label="Về đầu trang"><span>DAY 04</span><strong>POSE QC</strong></a>
+    <nav class="primary-nav" aria-label="Điều hướng chính">
+      <a href="#start">Bắt đầu</a>
+      <a href="#data-pack">Dữ liệu</a>
+      <a href="#workflow">Thao tác CVAT</a>
+      <a href="#cvat-tutorial">Làm trong CVAT</a>
+      <a href="#quality">Kiểm lỗi</a>
+      <a href="#submit">Nộp bài</a>
+      <a href="#glossary">Thuật ngữ</a>
+    </nav>
+    <button class="print-button" type="button" data-print>In hướng dẫn</button>
+  </header>
+
+  <main id="main-content">
+    <section class="hero" id="top">
+      <div class="hero-copy">
+        <p class="eyebrow">HƯỚNG DẪN HỌC VIÊN · CVAT SKELETON · COCO-17</p>
+        <h1>Từ ảnh đến pose model.</h1>
+        <p class="hero-lede">Lab 4 kéo dài <strong>240 phút</strong>: dựng skeleton, gán 20 ảnh nhiều người, tự kiểm, export COCO Keypoints, nhận phản hồi, fine-tune model và nộp bài. Trang này là hướng dẫn thao tác trực quan — đi từng bước, có ảnh chụp CVAT thật, không cần kinh nghiệm lập trình.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#start">Bắt đầu từ bước 0</a>
+          <a class="button button-secondary" href="#cvat-tutorial">Xem thao tác trong CVAT</a>
+        </div>
+      </div>
+      <aside class="evidence-board" aria-label="Thông số Lab 4">
+        <div class="board-title"><span>LAB 4 · POSE KEYPOINTS</span><strong>CVAT 2.74.1</strong></div>
+        <dl>
+          <div><dt>Thời lượng</dt><dd>240 phút</dd></div>
+          <div><dt>Core task</dt><dd>20 ảnh · person</dd></div>
+          <div><dt>Test set</dt><dd>10 ảnh · chỉ đánh giá</dd></div>
+          <div><dt>Điểm mỗi người</dt><dd>17</dd></div>
+          <div><dt>Định dạng nộp</dt><dd>Keypoints 1.0</dd></div>
+        </dl>
+        <div class="lane-meter" aria-label="Hai mươi ảnh core và mười ảnh test"><b>20</b><span>Core</span><i></i><b>10</b><span>Test</span></div>
+      </aside>
+    </section>
+
+    <section class="scope-section" aria-label="Phạm vi dữ liệu của Lab 4">
+      <div class="scope-map">
+        <article class="scope-card scope-card-current">
+          <span>ROUTE BẮT BUỘC</span>
+          <h2>20 ảnh core</h2>
+          <p><code>dataset/images/train/</code>. Gán mọi người bằng skeleton <code>person</code> 17 điểm; đây là nhãn dùng để train và được chấm.</p>
+          <a href="#workflow">Đi tới thao tác CVAT</a>
+        </article>
+        <article class="scope-card">
+          <span>CHỈ ĐÁNH GIÁ</span>
+          <h2>10 ảnh test</h2>
+          <p><code>dataset/labels/test/</code> đã có nhãn. Không sửa, không gán lại, không dùng để train.</p>
+          <a href="#submit">Xem bằng chứng phải nộp</a>
+        </article>
+        <article class="scope-card">
+          <span>BẰNG CHỨNG NỘP</span>
+          <h2>8 artifact</h2>
+          <p>Export COCO, nhãn train, visibility report, kết quả gold, Colab và peer review đều xuất phát từ task core.</p>
+          <a href="#submit">Xem danh sách nộp</a>
+        </article>
+      </div>
+    </section>
+
+    <section class="start-section section-pad" id="start" aria-labelledby="start-title">
+      <div class="section-heading wide-heading">
+        <p class="section-code">BƯỚC 0</p>
+        <h2 id="start-title">Bạn đang ở đâu, và bắt đầu từ đâu.</h2>
+        <p>Bạn chỉ cần đi theo đúng thứ tự bên dưới. Phần được chấm là <strong>một task core 20 ảnh</strong> theo pose COCO-17. Không có bộ ảnh hay task phụ nào cần làm thêm.</p>
+      </div>
+
+      <ol class="route-band" aria-label="Lộ trình Lab 4">
+        <li><span>PHẦN CHÍNH</span><strong>20 ảnh · person · COCO-17</strong><p>Gán tất cả người trong ảnh, export COCO Keypoints rồi chuyển thành nhãn train.</p></li>
+        <li class="route-current"><span>BẠN ĐANG Ở ĐÂY</span><strong>CVAT: thao tác và visibility</strong><p>Học cách tạo skeleton, đặt điểm, phân biệt visible/occluded/outside và lưu đúng dữ liệu.</p></li>
+        <li><span>ĐÓNG VÒNG</span><strong>Review → fine-tune → nộp</strong><p>Nhận kết quả đánh giá, sửa bài, chạy notebook Colab và nộp đủ deliverable.</p></li>
+      </ol>
+
+      <div class="level-cards" aria-label="Chọn lộ trình theo kinh nghiệm">
+        <article>
+          <span>MỚI HOÀN TOÀN</span>
+          <h3>Chưa từng gán nhãn</h3>
+          <p>Đọc hết trang này theo thứ tự. Dừng lâu ở mục <a href="#visibility">ba trạng thái điểm</a>, làm hai ảnh warm-up rồi mới gán hàng loạt.</p>
+          <b>Đi theo đủ 7 chặng</b>
+        </article>
+        <article>
+          <span>ĐÃ BIẾT CVAT</span>
+          <h3>Từng vẽ bbox hoặc polygon</h3>
+          <p>Skeleton khác bbox ở chỗ mỗi điểm có trạng thái riêng. Vào thẳng <a href="#cvat-tutorial">thao tác trong CVAT</a> rồi quay lại luật visibility.</p>
+          <b>Không bỏ bước tự kiểm</b>
+        </article>
+        <article>
+          <span>ĐÃ BIẾT POSE</span>
+          <h3>Từng làm keypoint COCO</h3>
+          <p>Xác nhận schema <code>person</code> 17 điểm, rồi dùng <a href="#quality">ba lượt tự kiểm</a>.</p>
+          <b>Không xem tham chiếu trước self-QC</b>
+        </article>
+      </div>
+
+      <div class="setup-block">
+        <div class="setup-copy">
+          <h3>Mở CVAT trước khi đọc tiếp</h3>
+          <p>CVAT chạy trên máy của lớp qua Docker. Bạn không cần biết Docker là gì — chỉ cần một lệnh để bật và một đường link để mở. Nếu CVAT đã được bật sẵn cho buổi học, bỏ qua lệnh và mở thẳng link.</p>
+          <p class="setup-hint">Cách mở cửa sổ lệnh: macOS bấm <kbd>⌘</kbd> + <kbd>Space</kbd>, gõ <em>Terminal</em>, Enter. Windows bấm phím Windows, gõ <em>PowerShell</em>, Enter.</p>
+        </div>
+        <ol class="setup-steps">
+          <li>
+            <b>1</b>
+            <div>
+              <strong>Bật CVAT</strong>
+              <p>Chạy trong thư mục cài CVAT của lớp. Lần đầu có thể mất vài phút.</p>
+              <div class="cmd-row"><code>docker compose up -d</code><button class="copy-button" type="button" data-copy="docker compose up -d">Sao chép</button></div>
+            </div>
+          </li>
+          <li>
+            <b>2</b>
+            <div>
+              <strong>Mở giao diện</strong>
+              <p>Mở trình duyệt và vào địa chỉ dưới đây, đăng nhập bằng tài khoản lớp cấp.</p>
+              <div class="cmd-row"><code>http://localhost:8080</code><a class="copy-button" href="http://localhost:8080">Mở</a></div>
+            </div>
+          </li>
+          <li>
+            <b>3</b>
+            <div>
+              <strong>Vào đúng task của bạn</strong>
+              <p>Bấm <strong>Tasks</strong> trên thanh trên cùng, chọn task của buổi Lab 4, rồi bấm <strong>Job #…</strong> để mở màn hình gán nhãn.</p>
+              <div class="cmd-row"><code>Tasks → task Lab 4 → Job</code></div>
+            </div>
+          </li>
+        </ol>
+      </div>
+
+      <div class="preflight-layout">
+        <div class="check-panel">
+          <p class="check-title">Sáu kiểm tra trước khi vẽ điểm đầu tiên</p>
+          <label><input type="checkbox" data-progress> CVAT mở được và đã đăng nhập</label>
+          <label><input type="checkbox" data-progress> Task core chứa đúng 20 ảnh train</label>
+          <label><input type="checkbox" data-progress> Label cha là <code>person</code></label>
+          <label><input type="checkbox" data-progress> Có đúng 17 sublabel theo thứ tự COCO</label>
+          <label><input type="checkbox" data-progress> Task core dùng skeleton <code>person</code> 17 điểm COCO theo đúng thứ tự</label>
+          <label><input type="checkbox" data-progress> Biết test set chỉ để đánh giá, không được dùng train</label>
+          <div class="progress-meter" aria-live="polite">
+            <span>Tiến độ preflight</span><strong data-progress-label>0/6</strong>
+            <i><b data-progress-bar></b></i>
+          </div>
+        </div>
+        <aside class="stop-rule">
+          <span>DỪNG LẠI KHI</span>
+          <h3>Schema khác thì dừng.</h3>
+          <p>Nếu tên điểm, thứ tự hoặc số lượng sublabel khác mô tả, đừng tự sửa. Ghi lại frame và khác biệt bạn thấy, báo cho người phụ trách task rồi mới tiếp tục.</p>
+          <a href="GUIDE.md">Mở lộ trình chi tiết</a>
+        </aside>
+      </div>
+    </section>
+
+    <section class="data-section section-pad" id="data-pack" aria-labelledby="data-title">
+      <div class="section-heading wide-heading">
+        <p class="section-code">GÓI DỮ LIỆU</p>
+        <h2 id="data-title">Một bộ train, một bộ test.</h2>
+        <p>Bạn gán nhãn đúng 20 ảnh trong <code>dataset/images/train/</code>. Mười ảnh trong <code>dataset/images/test/</code> đã có nhãn sẵn; giữ nguyên chúng để notebook đo model trước và sau fine-tune.</p>
+      </div>
+      <div class="boundary-note"><strong>Không trộn dữ liệu</strong><p>Không chép nhãn test sang train, không sửa <code>dataset/labels/test/</code>, và không đổi tên ảnh. Một model chỉ đáng tin khi train và test là hai bộ tách biệt.</p></div>
+    </section>
+
+    <section class="schema-section section-pad" id="visibility" aria-labelledby="schema-title">
+      <div class="schema-copy">
+        <div class="section-heading">
+          <h2 id="schema-title">Mỗi điểm có một trạng thái.</h2>
+          <p>Trạng thái mô tả <strong>bằng chứng bạn nhìn thấy</strong>, không mô tả hành vi hay tư thế của người trong ảnh.</p>
+        </div>
+        <figure class="skeleton-card">
+          <svg class="skeleton-map" viewBox="0 0 520 660" role="img" aria-labelledby="skeleton-title skeleton-desc">
+            <title id="skeleton-title">Sơ đồ skeleton COCO-17</title>
+            <desc id="skeleton-desc">Mười bảy điểm được đánh số theo thứ tự COCO, nối từ khuôn mặt qua vai, tay, hông và chân.</desc>
+            <rect class="skeleton-field" x="1" y="1" width="518" height="658" rx="2" />
+            <g class="bones">
+              <path d="M210 95 235 80 260 90 285 80 310 95 M185 185 335 185 M185 185 145 280 115 370 M335 185 375 280 405 370 M185 185 215 350 305 350 335 185 M215 350 205 480 195 610 M305 350 315 480 325 610" />
+            </g>
+            <g class="joints" aria-hidden="true">
+              <g transform="translate(260 90)"><circle r="18"/><text>1</text></g>
+              <g transform="translate(235 80)"><circle r="18"/><text>2</text></g>
+              <g transform="translate(285 80)"><circle r="18"/><text>3</text></g>
+              <g transform="translate(210 95)"><circle r="18"/><text>4</text></g>
+              <g transform="translate(310 95)"><circle r="18"/><text>5</text></g>
+              <g transform="translate(185 185)"><circle r="18"/><text>6</text></g>
+              <g transform="translate(335 185)"><circle r="18"/><text>7</text></g>
+              <g transform="translate(145 280)"><circle r="18"/><text>8</text></g>
+              <g transform="translate(375 280)"><circle r="18"/><text>9</text></g>
+              <g transform="translate(115 370)"><circle r="18"/><text>10</text></g>
+              <g transform="translate(405 370)"><circle r="18"/><text>11</text></g>
+              <g transform="translate(215 350)"><circle r="18"/><text>12</text></g>
+              <g transform="translate(305 350)"><circle r="18"/><text>13</text></g>
+              <g transform="translate(205 480)"><circle r="18"/><text>14</text></g>
+              <g transform="translate(315 480)"><circle r="18"/><text>15</text></g>
+              <g transform="translate(195 610)"><circle r="18"/><text>16</text></g>
+              <g transform="translate(325 610)"><circle r="18"/><text>17</text></g>
+            </g>
+          </svg>
+          <figcaption>
+            <strong>Thứ tự COCO-17</strong>
+            <ol class="keypoint-order">
+              <li>nose</li><li>left_eye</li><li>right_eye</li><li>left_ear</li><li>right_ear</li>
+              <li>left_shoulder</li><li>right_shoulder</li><li>left_elbow</li><li>right_elbow</li>
+              <li>left_wrist</li><li>right_wrist</li><li>left_hip</li><li>right_hip</li>
+              <li>left_knee</li><li>right_knee</li><li>left_ankle</li><li>right_ankle</li>
+            </ol>
+          </figcaption>
+        </figure>
+      </div>
+      <div class="visibility-board">
+        <article><b>v=2</b><h3>Visible</h3><p>Nhìn thấy khớp đủ rõ để đặt điểm ngay tại tâm khớp.</p><code>đặt vào tâm khớp</code></article>
+        <article><b>v=1</b><h3>Occluded</h3><p>Khớp bị che, nhưng vẫn suy ra được vị trí hợp lý từ phần cơ thể xung quanh.</p><code>đặt điểm + bật Occluded</code></article>
+        <article><b>v=0</b><h3>Outside</h3><p>Khớp nằm ngoài khung ảnh. Không đặt toạ độ cho điểm này.</p><code>bật Outside, không đoán bừa</code></article>
+      </div>
+    </section>
+
+    <section class="workflow-section section-pad" id="workflow" aria-labelledby="workflow-title">
+      <div class="section-heading wide-heading">
+        <h2 id="workflow-title">Sáu thao tác từ ảnh đến export.</h2>
+        <p>Đây là chuỗi thao tác cho task core 20 ảnh. Mỗi thẻ có ảnh chụp CVAT thật — bấm vào ảnh để phóng to, bấm tiêu đề để xem hướng dẫn chi tiết từng cú bấm.</p>
+      </div>
+      <ol class="workflow-list">
+        <li>
+          <div class="workflow-copy">
+            <span>01</span>
+            <div>
+              <h3><a href="#cvat-step-1">Mở đúng job</a></h3>
+              <p>Xác nhận đúng task, label và số ảnh: task core có <code>person</code> cùng 17 sublabel COCO.</p>
+              <code>Tasks → task → job</code>
+            </div>
+          </div>
+          <figure class="shot shot-thumb">
+            <button class="shot-zoom" type="button" data-zoom data-zoom-note="Góc trái thanh trên: Menu mở các thao tác của job, Save lưu bài gán. Bấm thẳng biểu tượng Save thay vì dùng phím tắt.">
+              <img src="assets/guide/cvat/08-menu-save.jpg" width="340" height="64" alt="Cận cảnh góc trái thanh công cụ CVAT với các nút Menu, Save, Undo và Redo" loading="lazy">
+              <span class="shot-zoom-hint" aria-hidden="true">Phóng to</span>
+            </button>
+            <figcaption>Góc trái thanh trên: <code>Menu</code> và <code>Save</code></figcaption>
+          </figure>
+        </li>
+        <li>
+          <div class="workflow-copy">
+            <span>02</span>
+            <div>
+              <h3><a href="#cvat-step-3">Tạo skeleton</a></h3>
+              <p>Chọn công cụ Skeleton rồi chọn <code>person</code> và <strong>Shape</strong>. Đặt điểm theo thứ tự hiển thị, không bỏ qua điểm khó.</p>
+              <code>Skeleton → person → Shape</code>
+            </div>
+          </div>
+          <figure class="shot shot-thumb">
+            <button class="shot-zoom" type="button" data-zoom data-zoom-note="Bảng Draw new skeleton: chọn label person, rồi bấm Shape. Không bấm Track — Track dành cho video, sẽ tạo đối tượng kéo dài qua nhiều frame.">
+              <img src="assets/guide/cvat/06-draw-skeleton.jpg" width="340" height="165" alt="Bảng Draw new skeleton của CVAT với label person và hai nút Shape và Track" loading="lazy">
+              <span class="shot-zoom-hint" aria-hidden="true">Phóng to</span>
+            </button>
+            <figcaption>Bảng Draw new skeleton: chọn <code>Shape</code></figcaption>
+          </figure>
+        </li>
+        <li>
+          <div class="workflow-copy">
+            <span>03</span>
+            <div>
+              <h3><a href="#cvat-step-5">Đặt trạng thái</a></h3>
+              <p>Quyết định riêng cho từng điểm. Chỉ dùng Occluded khi vẫn còn cơ sở suy ra vị trí khớp.</p>
+              <code>Visible ≠ Occluded ≠ Outside</code>
+            </div>
+          </div>
+          <figure class="shot shot-thumb">
+            <button class="shot-zoom" type="button" data-zoom data-zoom-note="Tab Labels ở panel phải cho biết task đang dùng label cha nào. Ở buổi lab này chỉ được có đúng một mục: person.">
+              <img src="assets/guide/cvat/05-labels-panel.jpg" width="320" height="130" alt="Panel phải của CVAT với các tab Objects, Labels, Issues và một mục person" loading="lazy">
+              <span class="shot-zoom-hint" aria-hidden="true">Phóng to</span>
+            </button>
+            <figcaption>Panel phải: kiểm label <code>person</code></figcaption>
+          </figure>
+        </li>
+        <li>
+          <div class="workflow-copy">
+            <span>04</span>
+            <div>
+              <h3><a href="#quality">Tự kiểm ba lượt</a></h3>
+              <p>Kiểm hình dáng, trái phải, vị trí khớp, trạng thái và điểm bị thiếu — theo đúng ba lượt cố định.</p>
+              <code>hình dáng → đếm → phóng to</code>
+            </div>
+          </div>
+          <figure class="shot shot-thumb shot-diagram">
+            <svg viewBox="0 0 320 130" role="img" aria-label="Ba lượt kiểm: hình dáng, đếm trạng thái, phóng to kiểm vị trí">
+              <g class="pass-row"><rect x="8" y="10" width="304" height="32" rx="2"/><text x="20" y="31">1 · đủ 17 điểm, không nối chéo</text></g>
+              <g class="pass-row"><rect x="8" y="49" width="304" height="32" rx="2"/><text x="20" y="70">2 · đếm v=1 và v=0 riêng</text></g>
+              <g class="pass-row"><rect x="8" y="88" width="304" height="32" rx="2"/><text x="20" y="109">3 · phóng to, kiểm tâm khớp</text></g>
+            </svg>
+            <figcaption>Sơ đồ ba lượt kiểm — chi tiết ở mục <a href="#quality">Kiểm lỗi</a></figcaption>
+          </figure>
+        </li>
+        <li>
+          <div class="workflow-copy">
+            <span>05</span>
+            <div>
+              <h3><a href="#cvat-step-6">Export dữ liệu</a></h3>
+              <p>Save, chuyển frame rồi quay lại để chắc điểm đã lưu, sau đó export đúng <strong>COCO Keypoints 1.0</strong>.</p>
+              <code>Save → Menu → Export job dataset</code>
+            </div>
+          </div>
+          <figure class="shot shot-thumb">
+            <button class="shot-zoom" type="button" data-zoom data-zoom-note="Menu của job mở ra danh sách; mục cần bấm là Export job dataset. Đừng nhầm với Upload annotations ở ngay phía trên.">
+              <img src="assets/guide/cvat/07-export-menu-detail.jpg" width="270" height="350" alt="Menu job của CVAT đang mở với mục Export job dataset" loading="lazy">
+              <span class="shot-zoom-hint" aria-hidden="true">Phóng to</span>
+            </button>
+            <figcaption>Menu job: <code>Export job dataset</code></figcaption>
+          </figure>
+        </li>
+        <li>
+          <div class="workflow-copy">
+            <span>06</span>
+            <div>
+              <h3><a href="#submit">Kiểm và sửa</a></h3>
+              <p>Chạy công cụ kiểm, đối chiếu báo cáo visibility, sửa lỗi trong CVAT rồi export lại nếu có thay đổi.</p>
+              <code>validate → review → fix → validate</code>
+            </div>
+          </div>
+          <figure class="shot shot-thumb shot-diagram">
+            <svg viewBox="0 0 320 130" role="img" aria-label="Vòng lặp kiểm: validate, review, fix, validate">
+              <g class="pass-row"><rect x="8" y="10" width="304" height="32" rx="2"/><text x="20" y="31">validate → báo cáo cấu trúc</text></g>
+              <g class="pass-row"><rect x="8" y="49" width="304" height="32" rx="2"/><text x="20" y="70">review → ghi finding</text></g>
+              <g class="pass-row"><rect x="8" y="88" width="304" height="32" rx="2"/><text x="20" y="109">fix trong CVAT → export lại</text></g>
+            </svg>
+            <figcaption>Vòng lặp kiểm — lệnh cụ thể ở mục <a href="#submit">Nộp bài</a></figcaption>
+          </figure>
+        </li>
+      </ol>
+    </section>
+
+    <section class="cvat-tutorial section-pad" id="cvat-tutorial" aria-labelledby="cvat-tutorial-title">
+      <div class="section-heading wide-heading">
+        <h2 id="cvat-tutorial-title">Làm theo ảnh, rồi kiểm ngay trên task.</h2>
+        <p>Sáu bước dưới đây đi theo đúng thứ tự bấm chuột. Ảnh là chụp thật từ CVAT 2.74.1; giao diện của bạn có thể lệch chút theo kích thước màn hình, nhưng tên nút và kết quả mong đợi thì giống nhau.</p>
+      </div>
+      <aside class="boundary-note"><strong>Tự làm trước</strong><p>Ảnh hướng dẫn chỉ cho biết bấm ở đâu, không cho biết điểm nằm chỗ nào. Tự quyết định toạ độ và trạng thái trước khi xem gợi ý của model, bài của bạn cùng nhóm hay đáp án.</p></aside>
+
+      <ol class="walkthrough">
+        <li id="cvat-step-1" class="step-wide">
+          <div class="step-copy">
+            <p class="step-index">Bước 1</p>
+            <h3>Mở job và kiểm thanh trên</h3>
+            <p>Thanh trên cùng cho biết bạn đang ở ảnh nào. Bên trái là <strong>Menu</strong> và <strong>Save</strong>; ở giữa là các nút chuyển frame; bên phải là tên file và ô số frame. Ảnh dưới chỉ minh hoạ giao diện — task core của bạn có 20 ảnh.</p>
+            <ul class="step-check">
+              <li>Task core có 20 ảnh. Số frame có thể bắt đầu khác tùy job được giao.</li>
+              <li>Tên file trên thanh trên trùng với ảnh bạn đang gán</li>
+              <li>Không bấm <strong>Finish the job</strong> khi chưa gán xong</li>
+            </ul>
+            <p class="step-note">Mẹo: bấm thẳng biểu tượng <strong>Save</strong>. Phím tắt <kbd>Ctrl</kbd>+<kbd>S</kbd> chỉ ăn khi con trỏ đang ở vùng ảnh.</p>
+          </div>
+          <figure class="shot">
+            <button class="shot-zoom" type="button" data-zoom data-zoom-note="Bước 1 — thanh trên: Menu và Save ở trái, nút chuyển frame ở giữa, tên file và số frame ở phải. Dùng tên file để biết đang ở ảnh nào trong task core 20 ảnh.">
+              <img src="assets/guide/cvat/04-toolbar-top.jpg" width="1120" height="64" alt="Cận cảnh thanh công cụ trên của CVAT: Menu, Save, Undo, Redo, nút chuyển frame, tên file và ô số frame">
+              <span class="shot-zoom-hint" aria-hidden="true">Phóng to</span>
+            </button>
+            <figcaption><span>ẢNH THẬT · CẬN CẢNH</span><strong>Thanh trên của màn hình gán nhãn</strong></figcaption>
+          </figure>
+        </li>
+
+        <li id="cvat-step-2">
+          <div class="step-copy">
+            <p class="step-index">Bước 2</p>
+            <h3>Kiểm label trước khi vẽ</h3>
+            <p>Ở panel bên phải, mở tab <strong>Labels</strong>. Task core chỉ có <strong>một</strong> label cha tên <code>person</code>; 17 điểm nằm bên trong label đó chứ không phải 17 label rời.</p>
+            <ul class="step-check">
+              <li><code>Items: 1</code> và dòng duy nhất là <code>person</code></li>
+              <li>Tab <strong>Objects</strong> đang trống nếu bạn chưa vẽ gì</li>
+              <li>Thấy nhiều hơn một label cha thì dừng và báo lại</li>
+            </ul>
+          </div>
+          <figure class="shot">
+            <button class="shot-zoom" type="button" data-zoom data-zoom-note="Bước 2 — panel phải, tab Labels. Chỉ được có đúng một label cha là person. Nếu thấy 17 label rời thì task sai schema, đừng gán tiếp.">
+              <img src="assets/guide/cvat/05-labels-panel.jpg" width="320" height="130" alt="Cận cảnh panel phải của CVAT: các tab Objects, Labels, Issues và mục person duy nhất" loading="lazy">
+              <span class="shot-zoom-hint" aria-hidden="true">Phóng to</span>
+            </button>
+            <figcaption><span>ẢNH THẬT · CẬN CẢNH</span><strong>Tab Labels chỉ có <code>person</code></strong></figcaption>
+          </figure>
+        </li>
+
+        <li id="cvat-step-3">
+          <div class="step-copy">
+            <p class="step-index">Bước 3</p>
+            <h3>Chọn công cụ Skeleton, chọn Shape</h3>
+            <p>Trên thanh công cụ dọc bên trái, bấm biểu tượng <strong>Skeleton</strong>. Bảng <em>Draw new skeleton</em> hiện ra: giữ label <code>person</code> rồi bấm <strong>Shape</strong>.</p>
+            <ul class="step-check">
+              <li>Bấm <strong>Shape</strong>, <strong>không</strong> bấm Track — Track dành cho video</li>
+              <li>Một cú bấm lên ảnh sẽ tạo cả cụm 17 điểm cùng lúc</li>
+              <li>Sau đó bạn kéo từng điểm về đúng vị trí</li>
+            </ul>
+            <p class="step-note">Đặt một người một skeleton và gán <strong>tất cả người nhìn thấy</strong>. Hoàn tất một người rồi mới chuyển sang người kế tiếp để tránh nhầm người.</p>
+          </div>
+          <figure class="shot">
+            <button class="shot-zoom" type="button" data-zoom data-zoom-note="Bước 3 — bảng Draw new skeleton. Label giữ person, bấm Shape. Nút Track ngay bên cạnh dành cho video và sẽ tạo sai loại đối tượng.">
+              <img src="assets/guide/cvat/06-draw-skeleton.jpg" width="340" height="165" alt="Cận cảnh bảng Draw new skeleton với label person và hai nút Shape và Track" loading="lazy">
+              <span class="shot-zoom-hint" aria-hidden="true">Phóng to</span>
+            </button>
+            <figcaption><span>ẢNH THẬT · CẬN CẢNH</span><strong>Chọn <code>Shape</code>, không chọn Track</strong></figcaption>
+          </figure>
+        </li>
+
+        <li id="cvat-step-4">
+          <div class="step-copy">
+            <p class="step-index">Bước 4</p>
+            <h3>Đặt đủ 17 điểm theo thứ tự</h3>
+            <p>Đi theo thứ tự COCO hiển thị trong tool: mặt trước, rồi vai, khuỷu, cổ tay, hông, gối, cổ chân. Đừng bỏ qua điểm khó để quay lại sau — rất dễ quên.</p>
+            <ul class="step-check">
+              <li>Đọc tên điểm ở sidebar mỗi khi kéo, đó là cách bắt lỗi trái/phải</li>
+              <li>Trái/phải tính theo cơ thể người trong ảnh</li>
+              <li>Không xoá điểm khó; điểm không dùng được thì gắn trạng thái ở bước 5</li>
+            </ul>
+          </div>
+          <figure class="shot">
+            <button class="shot-zoom" type="button" data-zoom data-zoom-note="Bước 4 — toàn màn hình gán nhãn: vùng ảnh ở giữa, thanh công cụ dọc bên trái, panel đối tượng bên phải. Đây là bố cục bạn sẽ làm việc trong suốt buổi.">
+              <img src="assets/guide/cvat/01-job-overview.jpg" width="1440" height="900" alt="Toàn màn hình gán nhãn của CVAT: vùng ảnh ở giữa, thanh công cụ bên trái, panel Labels bên phải" loading="lazy">
+              <span class="shot-zoom-hint" aria-hidden="true">Phóng to</span>
+            </button>
+            <figcaption><span>ẢNH THẬT · TOÀN MÀN HÌNH</span><strong>Bố cục màn hình gán nhãn</strong></figcaption>
+          </figure>
+        </li>
+
+        <li id="cvat-step-5">
+          <div class="step-copy">
+            <p class="step-index">Bước 5</p>
+            <h3>Gán trạng thái cho từng điểm</h3>
+            <p>Chọn một điểm rồi đặt trạng thái: <strong>Visible</strong> khi nhìn thấy khớp, <strong>Occluded</strong> (phím <kbd>q</kbd>) khi bị che nhưng vẫn suy ra được, <strong>Outside</strong> (phím <kbd>o</kbd>) khi ra ngoài khung hoặc mất sạch bằng chứng.</p>
+            <ul class="step-check">
+              <li>Không dùng <strong>Hidden</strong> (<kbd>h</kbd>) — trạng thái này không được lưu vào export</li>
+              <li>Nếu cả task core không có điểm nào <code>v=1</code>, xem lại vì có thể bạn đang né điểm khó</li>
+            </ul>
+          </div>
+          <figure class="shot shot-diagram shot-diagram-wide">
+            <svg viewBox="0 0 420 200" role="img" aria-label="Ba trạng thái điểm: Visible v bằng 2, Occluded v bằng 1, Outside v bằng 0">
+              <g class="state-row"><rect x="6" y="8" width="408" height="56" rx="2"/><circle cx="40" cy="36" r="12"/><text class="state-code" x="72" y="32">v=2 · Visible</text><text class="state-note" x="72" y="52">thấy khớp → đặt vào tâm khớp</text></g>
+              <g class="state-row state-occluded"><rect x="6" y="72" width="408" height="56" rx="2"/><circle cx="40" cy="100" r="12"/><text class="state-code" x="72" y="96">v=1 · Occluded</text><text class="state-note" x="72" y="116">bị che, còn suy ra được → vẫn đặt điểm</text></g>
+              <g class="state-row state-outside"><rect x="6" y="136" width="408" height="56" rx="2"/><circle cx="40" cy="164" r="12"/><text class="state-code" x="72" y="160">v=0 · Outside</text><text class="state-note" x="72" y="180">ngoài khung hoặc mất bằng chứng → không đoán</text></g>
+            </svg>
+            <figcaption><span>SƠ ĐỒ</span><strong>Ba trạng thái, ba quyết định khác nhau</strong></figcaption>
+          </figure>
+        </li>
+
+        <li id="cvat-step-6">
+          <div class="step-copy">
+            <p class="step-index">Bước 6</p>
+            <h3>Lưu, kiểm lại, rồi export</h3>
+            <p>Bấm <strong>Save</strong>, chuyển sang frame khác rồi quay lại — nếu điểm vẫn còn nguyên thì dữ liệu đã lưu. Sau đó mở <strong>Menu → Export job dataset</strong>, chọn <strong>COCO Keypoints 1.0</strong> và tạo file ZIP.</p>
+            <ul class="step-check">
+              <li>Chọn đúng <strong>COCO Keypoints 1.0</strong> — <code>COCO 1.0</code> và <code>YOLO 1.1</code> sẽ mất phần keypoint</li>
+              <li>Chờ mục <strong>Requests</strong> chuyển sang <em>Finished</em> rồi mới tải</li>
+              <li>Không mở ZIP ra sửa file JSON bên trong</li>
+            </ul>
+            <p class="step-note">Nếu điểm biến mất sau khi quay lại frame: dừng, ghi lại số frame và tên điểm, đừng vẽ lại theo trí nhớ.</p>
+          </div>
+          <figure class="shot">
+            <button class="shot-zoom" type="button" data-zoom data-zoom-note="Bước 6 — Menu của job. Bấm Export job dataset, rồi chọn định dạng COCO Keypoints 1.0 trong hộp thoại tiếp theo.">
+              <img src="assets/guide/cvat/03-export-menu.jpg" width="1440" height="900" alt="Màn hình CVAT với menu job đang mở và mục Export job dataset" loading="lazy">
+              <span class="shot-zoom-hint" aria-hidden="true">Phóng to</span>
+            </button>
+            <figcaption><span>ẢNH THẬT · TOÀN MÀN HÌNH</span><strong>Menu → Export job dataset</strong></figcaption>
+          </figure>
+        </li>
+      </ol>
+
+      <p class="shot-status">Các ảnh cận cảnh được cắt trực tiếp từ ba ảnh chụp toàn màn hình gốc trong <code>assets/guide/cvat/</code> (<code>01-job-overview.jpg</code>, <code>02-select-skeleton.jpg</code>, <code>03-export-menu.jpg</code>) — không vẽ lại, không dựng mô phỏng. Riêng bước 5 chưa có ảnh chụp kèm skeleton đã vẽ nên dùng sơ đồ; ảnh thật sẽ bổ sung sau khi có bài gán mẫu được duyệt.</p>
+    </section>
+
+    <section class="timeline-section section-pad" aria-labelledby="timeline-title">
+      <div class="timeline-heading">
+        <div class="section-heading"><h2 id="timeline-title">Bảy chặng, 240 phút.</h2></div>
+        <p>Đi hết các chặng theo thứ tự. Bạn chỉ chuyển sang đánh giá sau khi đã khóa nhãn; mọi artifact của buổi học đều xuất phát từ task core.</p>
+      </div>
+      <ol class="timeline">
+        <li><time>00–20</time><strong>Dựng schema</strong><span>Kiểm skeleton, label và luật visibility</span></li>
+        <li><time>20–40</time><strong>Warm-up</strong><span>Hai ảnh đầu, đủ 17 keypoint và trái/phải</span></li>
+        <li><time>40–130</time><strong>Gán nhãn</strong><span>Task core: 20 ảnh, tất cả người, 17 keypoint</span></li>
+        <li><time>130–150</time><strong>Khóa nhãn</strong><span>Tự kiểm, export COCO, convert và kiểm cấu trúc</span></li>
+        <li><time>150–190</time><strong>Đánh giá &amp; sửa</strong><span>Nhận kết quả, đọc OKS, rework có lý do</span></li>
+        <li><time>190–230</time><strong>Colab</strong><span>Fine-tune <code>yolo26n-pose.pt</code> 80 epoch, đánh giá test set</span></li>
+        <li><time>230–240</time><strong>Nộp bài</strong><span>Kiểm đủ artifact, báo cáo và peer review</span></li>
+      </ol>
+    </section>
+
+    <section class="quality-section section-pad" id="quality" aria-labelledby="quality-title">
+      <div class="section-heading">
+        <h2 id="quality-title">Kiểm ba lượt, không kiểm theo cảm giác.</h2>
+        <p>Làm theo đúng thứ tự: lượt rẻ trước, lượt tốn thời gian sau.</p>
+      </div>
+      <div class="quality-layout">
+        <div class="quality-checks">
+          <details open><summary><span>LƯỢT 1</span><strong>Hình dáng và đủ điểm</strong><i>+</i></summary><div>Mỗi người đúng một skeleton. Đủ 17 điểm. Không có đoạn nối chéo sang tay, chân khác hoặc sang cơ thể khác.</div></details>
+          <details><summary><span>LƯỢT 2</span><strong>Trái phải và vị trí khớp</strong><i>+</i></summary><div>Đọc trái phải theo cơ thể người trong ảnh. Vai, khuỷu, cổ tay, hông, gối và cổ chân nằm tại tâm khớp hợp lý, không lệch ra thịt hay ra quần áo.</div></details>
+          <details><summary><span>LƯỢT 3</span><strong>Trạng thái và bằng chứng</strong><i>+</i></summary><div>Phóng to và đối chiếu từng điểm với ảnh. Không dùng Occluded cho khớp đã ra ngoài khung. Không đặt điểm mặt vào giữa vùng che.</div></details>
+        </div>
+        <aside class="error-board">
+          <h3>Bốn lỗi phải bắt</h3>
+          <dl>
+            <div><dt>SWAP</dt><dd>Nhầm trái với phải vì tính theo phía màn hình.</dd></div>
+            <div><dt>FLOAT</dt><dd>Điểm trôi khỏi tâm khớp.</dd></div>
+            <div><dt>GUESS</dt><dd>Đặt toạ độ khi không còn bằng chứng nào.</dd></div>
+            <div><dt>LEAK</dt><dd>Xem model hoặc đáp án trước khi tự làm xong.</dd></div>
+          </dl>
+        </aside>
+      </div>
+      <div class="finding-formula" aria-label="Cấu trúc một finding"><b>ẢNH</b><i>+</i><b>ĐIỂM</b><i>+</i><b>LUẬT</b><i>+</i><b>CÁCH SỬA</b></div>
+      <div class="finding-example">
+        <div><span>Ảnh</span><strong>train_07</strong></div>
+        <div><span>Điểm</span><strong>right_wrist</strong></div>
+        <div><span>Bằng chứng</span><strong>Vật cầm tay che một phần tâm khớp</strong></div>
+        <div><span>Hành động</span><strong>Kiểm lại v=1 và đặt theo hướng cẳng tay</strong></div>
+      </div>
+    </section>
+
+    <section class="submit-section section-pad" id="submit" aria-labelledby="submit-title">
+      <div class="section-heading wide-heading">
+        <p class="section-code">NỘP BÀI</p>
+        <h2 id="submit-title">Chín deliverable, hai lớp kiểm chứng.</h2>
+        <p>Công cụ kiểm chỉ xác nhận cấu trúc file đúng. Phần đánh giá vị trí khớp và chất lượng quyết định vẫn dựa trên bằng chứng trong annotation và báo cáo của bạn.</p>
+      </div>
+      <div class="submit-layout">
+        <div class="package-tree">
+          <span>TRƯỚC KHI NỘP</span>
+          <pre><code>annotations/coco_keypoints/
+dataset/labels/train/
+outputs/visibility_report.json
+outputs/eval_vs_gold.json
+outputs/eval_model.json
+reports/REPORT.md
+reports/review_partner.md</code></pre>
+          <p>Không thêm ảnh gốc, câu trả lời tham chiếu, file model trọng số hay file tạm.</p>
+        </div>
+        <ol class="submit-steps">
+          <li><b>1</b><div><strong>Convert và kiểm nhãn train</strong><div class="cmd-row"><code>python3 tools/coco_kp_to_yolo_pose.py --coco annotations/coco_keypoints/person_keypoints_default.json --out dataset/labels/train</code><button class="copy-button" type="button" data-copy="python3 tools/coco_kp_to_yolo_pose.py --coco annotations/coco_keypoints/person_keypoints_default.json --out dataset/labels/train">Sao chép</button></div><span>Sau đó chạy <code>python3 tools/check_pose_labels.py --images dataset/images/train --labels dataset/labels/train</code>. Sửa trong CVAT, không sửa JSON bằng tay.</span></div></li>
+          <li><b>2</b><div><strong>Tạo visibility report và review</strong><div class="cmd-row"><code>python3 tools/visibility_report.py --labels dataset/labels/train --out outputs/visibility_report.json --markdown reports/visibility_report.md</code><button class="copy-button" type="button" data-copy="python3 tools/visibility_report.py --labels dataset/labels/train --out outputs/visibility_report.json --markdown reports/visibility_report.md">Sao chép</button></div><span>Hoàn thành <code>GUIDELINE_MINI.md</code>, <code>reports/REPORT.md</code> và <code>reports/review_partner.md</code>.</span></div></li>
+          <li><b>3</b><div><strong>Đánh giá, Colab, rồi nộp</strong><span>Sau khi protected release được mở cho lớp, chạy evaluator để tạo <code>outputs/eval_vs_gold.json</code>. Mở notebook Colab, chạy fine-tune 80 epoch để tạo <code>outputs/eval_model.json</code>, rồi kiểm lại danh sách bên trái.</span></div></li>
+        </ol>
+      </div>
+      <div class="decision-row">
+        <article><span>CẤU TRÚC</span><strong>File, schema, ánh xạ ảnh, số lượng</strong></article>
+        <article><span>NỘI DUNG</span><strong>Vị trí khớp, trái phải, trạng thái, lập luận</strong></article>
+        <p>Kiểm cấu trúc PASS không tự động nghĩa là bài gán đúng.</p>
+      </div>
+    </section>
+
+    <section class="glossary-section section-pad" id="glossary" aria-labelledby="glossary-title">
+      <div class="section-heading wide-heading">
+        <p class="section-code">THUẬT NGỮ</p>
+        <h2 id="glossary-title">Mười hai từ đủ để đi hết buổi.</h2>
+        <p>Không cần nhớ thuộc. Gặp từ lạ ở trên thì quay lại đây tra.</p>
+      </div>
+      <dl class="glossary-list">
+        <div><dt>Keypoint</dt><dd>Một điểm đánh dấu vị trí khớp trên cơ thể, ví dụ cổ tay trái.</dd></div>
+        <div><dt>COCO-17</dt><dd>Bộ 17 keypoint chuẩn dùng rộng rãi cho bài toán tư thế người.</dd></div>
+        <div><dt>Skeleton</dt><dd>Cả cụm 17 điểm của một người, kèm các đoạn nối giữa chúng.</dd></div>
+        <div><dt>Sublabel</dt><dd>Tên của từng điểm bên trong skeleton, ví dụ <code>left_knee</code>.</dd></div>
+        <div><dt>Frame</dt><dd>Một ảnh trong task. Task core của buổi này có 20 frame.</dd></div>
+        <div><dt>Job</dt><dd>Phần việc được giao trong một task. Bấm vào job để mở màn hình gán nhãn.</dd></div>
+        <div><dt>Shape / Track</dt><dd>Shape là đối tượng trên một ảnh. Track là đối tượng kéo dài qua nhiều frame video — buổi này không dùng.</dd></div>
+        <div><dt>Visibility</dt><dd>Trạng thái của một điểm: nhìn thấy, bị che, hay ngoài khung.</dd></div>
+        <div><dt>Occluded</dt><dd>Bị che nhưng vẫn suy ra được vị trí. Vẫn đặt điểm.</dd></div>
+        <div><dt>Outside</dt><dd>Ngoài khung ảnh hoặc mất sạch bằng chứng. Không đặt toạ độ.</dd></div>
+        <div><dt>Export</dt><dd>Xuất bài gán ra file để nộp. Buổi này dùng định dạng COCO Keypoints 1.0.</dd></div>
+        <div><dt>Finding</dt><dd>Một lỗi hoặc nghi vấn được ghi lại kèm ảnh, điểm, luật bị vi phạm và cách sửa.</dd></div>
+      </dl>
+    </section>
+
+    <section class="recovery-section section-pad" aria-labelledby="recovery-title">
+      <div class="section-heading"><h2 id="recovery-title">Gặp sự cố thì làm gì.</h2><p>Giữ nguyên những gì đã gán, xác định lỗi thuộc về công cụ, dữ liệu hay luật, rồi mới sửa.</p></div>
+      <div class="recovery-list">
+        <details><summary>Không thấy đủ 17 sublabel</summary><p>Dừng task. Đây là lỗi cấu hình, không phải lỗi của bạn — báo lại để tạo task đúng schema. Không tự thêm điểm bằng tay.</p></details>
+        <details><summary>Save xong điểm biến mất</summary><p>Mở lại đúng frame đó, kiểm trạng thái Outside và danh sách Objects. Ghi lại số frame cùng tên điểm bị ảnh hưởng.</p></details>
+        <details><summary>Export không hiện ra</summary><p>Mở mục <strong>Requests</strong> trên thanh trên cùng, chờ trạng thái <em>Finished</em> rồi tải lại. Đừng đổi sang định dạng khác để né lỗi.</p></details>
+        <details><summary>File export không có phần keypoints</summary><p>Bạn đã chọn nhầm <code>COCO 1.0</code> hoặc <code>YOLO 1.1</code>. Export lại bằng <strong>COCO Keypoints 1.0</strong>.</p></details>
+        <details><summary>Công cụ kiểm báo sai tên file</summary><p>Kiểm task core có đúng 20 ảnh và tên ảnh giữ nguyên. Sửa từ CVAT hoặc tạo lại task, không sửa file JSON bằng tay.</p></details>
+        <details><summary>Không mở được CVAT ở localhost:8080</summary><p>Kiểm CVAT đã chạy chưa bằng <code>docker compose up -d</code> trong thư mục cài đặt, rồi thử lại sau khoảng một phút.</p></details>
+      </div>
+    </section>
+  </main>
+
+  <div class="lightbox" data-lightbox hidden>
+    <div class="lightbox-backdrop" data-lightbox-close></div>
+    <figure class="lightbox-panel" role="dialog" aria-modal="true" aria-labelledby="lightbox-heading">
+      <div class="lightbox-bar">
+        <p id="lightbox-heading" data-lightbox-heading>Ảnh hướng dẫn</p>
+        <div class="lightbox-controls">
+          <button type="button" data-lightbox-prev aria-label="Ảnh trước">←</button>
+          <span data-lightbox-count aria-live="polite">1/1</span>
+          <button type="button" data-lightbox-next aria-label="Ảnh sau">→</button>
+          <button type="button" class="lightbox-close" data-lightbox-close>Đóng ✕</button>
+        </div>
+      </div>
+      <figcaption data-lightbox-note></figcaption>
+      <p class="lightbox-hint">Hướng dẫn này luôn hiện khi phóng to. Bấm ra ngoài ảnh, bấm <strong>Đóng</strong> hoặc nhấn <kbd>Esc</kbd> để quay lại trang; dùng <kbd>←</kbd> <kbd>→</kbd> để xem ảnh khác.</p>
+      <div class="lightbox-stage"><img alt="" data-lightbox-image></div>
+    </figure>
+  </div>
+
+  <footer class="site-footer">
+    <div><strong>DAY 04 · POSE KEYPOINTS</strong><p>COCO-17, quyết định về trạng thái điểm và sửa bài dựa trên bằng chứng.</p></div>
+    <nav aria-label="Tài liệu liên quan">
+      <a href="GUIDE.md">Bản chữ</a>
+      <a href="GUIDE.md">Lộ trình chi tiết</a>
+      <a href="RUBRIC.md">Thang điểm</a>
+    </nav>
+  </footer>
+</body>
+</html>
