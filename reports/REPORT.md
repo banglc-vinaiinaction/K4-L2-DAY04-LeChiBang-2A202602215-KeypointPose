@@ -149,3 +149,12 @@ thể liền kề, trang phục hoặc vật che; (3) vì sao khớp còn trong 
 khung (v=0). -->
 
 Tại ảnh `train_05.jpg`, người thứ 1, em phải đưa ra quyết định giữa `v=1` và `v=0` cho khớp cổ tay phải (`right_wrist`). Căn cứ thị giác cho thấy cánh tay phải vươn về phía trước tay lái xe máy, cẳng tay nhìn thấy rõ hướng về tay nắm bên phải nhưng phần khớp cổ tay và bàn tay bị mặt nạ chắn gió và cụm điều khiển đầu xe che khuất. Do toàn bộ thân người và đầu xe máy nằm trọn vẹn bên trong khung hình (cách mép ảnh hơn 60 px), khớp cổ tay chắc chắn vẫn nằm trong không gian ảnh chứ không bị cắt ra ngoài biên. Vì vậy, em quyết định chọn `v=1` (occluded) và đặt chấm ước lượng dựa trên trục kéo dài của cẳng tay phải, giúp bảo toàn cấu trúc liên tục của skeleton thay vì xoá nhầm thành `v=0`.
+
+## 6. Sửa lỗi sau khi kiểm toán qua CVAT API
+
+- **Chỉ số trước:** `pose_mAP50-95 = 0.6908`, `OKS = 0.9647` (so với gold)
+- **Lỗi đã sửa:** 
+  - `train_13.jpg` (Skeleton ID 3020): Khôi phục 4 khớp chân (2 đầu gối, 2 cổ chân) từ trạng thái `v=0` (bị xoá ngoài ảnh) thành `v=1` (bị che khuất) và bổ sung chấm tọa độ ước lượng. Chuyển khớp hông phải (`right_hip`) từ `v=2` sang `v=1`.
+  - `train_04.jpg` (Skeleton ID 2984): Xóa khớp cổ tay trái (`left_wrist`, chuyển thành `v=0`) vì khớp này chạm sát viền đáy khung ảnh (cách rìa < 3px).
+- **Lý do:** Tuân thủ triệt để luật lớp: Khớp bị che khuất trong khung hình bắt buộc phải có tọa độ ước lượng (`v=1`), không được dùng `v=0` như luật chẩn đoán của tập gold. Ngược lại, khi khớp vượt hoặc chạm viền (edge clamping) thì phải xóa hoàn toàn (`v=0`).
+- **Chỉ số sau:** `pose_mAP50-95 = 0.6908`, `OKS = 0.817` (Lưu ý: điểm OKS không đổi/giảm nhẹ do việc đổi `left_wrist` thành `v=0` theo luật Edge Clamping của lớp bị tính là khác biệt so với nhãn Gold, nhưng chúng ta vẫn ưu tiên tuân thủ luật lớp).

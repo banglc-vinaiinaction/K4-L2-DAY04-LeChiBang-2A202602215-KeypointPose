@@ -9,11 +9,12 @@
     "oks75": 0.7931,
     "findings": {
       "co_khac_gold": 69,
-      "gold_khong_gan_nhan": 61,
+      "gold_khong_gan_nhan": 65,
       "lech_nhe": 40,
-      "truot_han": 13,
       "nham_nguoi": 12,
+      "truot_han": 12,
       "dao_trai_phai": 5,
+      "xoa_khop_bi_che": 1,
       "thieu_khop": 1
     }
   },
@@ -313,7 +314,7 @@
       "matches": [
         {
           "gold_person": 1,
-          "your_person": 1,
+          "your_person": 2,
           "oks": 0.1439,
           "findings": [
             {
@@ -370,10 +371,10 @@
               "detail": "Chấm này gần right_elbow của một người khác trong ảnh hơn là của người bạn đang gán."
             },
             {
-              "type": "truot_han",
-              "label": "Trượt hẳn",
+              "type": "xoa_khop_bi_che",
+              "label": "Xoá khớp bị che",
               "keypoint": "left_wrist",
-              "detail": "Lệch 320 px = 9.2 lần bán kính dung sai của khớp này."
+              "detail": "Gold có v=1, bài của bạn v=0 nên khớp này tính 0 điểm. Gán lại với v=1 và đặt chấm ở vị trí ước lượng."
             },
             {
               "type": "gold_khong_gan_nhan",
@@ -385,7 +386,7 @@
         },
         {
           "gold_person": 2,
-          "your_person": 2,
+          "your_person": 1,
           "oks": 0.2059,
           "findings": [
             {
@@ -816,7 +817,7 @@
       "matches": [
         {
           "gold_person": 1,
-          "your_person": 3,
+          "your_person": 1,
           "oks": 0.8951,
           "findings": [
             {
@@ -926,7 +927,7 @@
         },
         {
           "gold_person": 3,
-          "your_person": 1,
+          "your_person": 3,
           "oks": 0.155,
           "findings": [
             {
@@ -1005,6 +1006,30 @@
               "label": "Lệch nhẹ",
               "keypoint": "right_hip",
               "detail": "Lệch 89 px = 1.9 lần bán kính dung sai. Sửa được, ít hại."
+            },
+            {
+              "type": "gold_khong_gan_nhan",
+              "label": "Gold không gán khớp này",
+              "keypoint": "left_knee",
+              "detail": "Không bị trừ điểm: khớp gold có v=0 bị loại khỏi OKS. Xem mục lưu ý trong README."
+            },
+            {
+              "type": "gold_khong_gan_nhan",
+              "label": "Gold không gán khớp này",
+              "keypoint": "right_knee",
+              "detail": "Không bị trừ điểm: khớp gold có v=0 bị loại khỏi OKS. Xem mục lưu ý trong README."
+            },
+            {
+              "type": "gold_khong_gan_nhan",
+              "label": "Gold không gán khớp này",
+              "keypoint": "left_ankle",
+              "detail": "Không bị trừ điểm: khớp gold có v=0 bị loại khỏi OKS. Xem mục lưu ý trong README."
+            },
+            {
+              "type": "gold_khong_gan_nhan",
+              "label": "Gold không gán khớp này",
+              "keypoint": "right_ankle",
+              "detail": "Không bị trừ điểm: khớp gold có v=0 bị loại khỏi OKS. Xem mục lưu ý trong README."
             }
           ]
         }
@@ -1191,7 +1216,7 @@
       "matches": [
         {
           "gold_person": 1,
-          "your_person": 1,
+          "your_person": 2,
           "oks": 0.5328,
           "findings": [
             {
@@ -1287,7 +1312,7 @@
         },
         {
           "gold_person": 2,
-          "your_person": 2,
+          "your_person": 1,
           "oks": 0.3977,
           "findings": [
             {
